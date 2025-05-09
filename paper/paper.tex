@@ -1,0 +1,289 @@
+% APA Style Paper Template
+\documentclass[12pt, stu, abstract]{apa7}
+
+% ------------------------------------------------
+% Standard packages
+% ------------------------------------------------
+\usepackage[american]{babel}
+\usepackage{csquotes}
+\usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber]{biblatex}
+\DeclareLanguageMapping{american}{american-apa}
+\addbibresource{references.bib}  % Ensure this file exists and contains valid entries
+
+% Math packages for your equations
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{bm}
+
+% Tables and figures
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Itemize spacing – keeps bullets double‑spaced in APA7
+\usepackage{enumitem}
+\setlist[itemize]{itemsep=0pt,topsep=0pt,parsep=0pt}
+
+% Nice looking tables
+\usepackage{siunitx}
+\usepackage{threeparttable}
+
+% Appendices
+\usepackage{appendix}
+
+
+% ------------------------------------------------
+% Metadata
+% ------------------------------------------------
+\title{The Impact of Interest-Rate Changes on Sector Stocks and Sun-Belt Real-Estate Markets}
+\author{Daniel Lott}
+\authorsaffiliations{University of Arizona}
+\course{MATH 462 Financial Mathematics}
+\professor{Dr. Lianfen Qian}
+\duedate{May 14, 2025}
+\abstract{This study investigates the relationship between Federal Reserve interest rate changes and financial markets, focusing on sector equity performance and real estate dynamics in Sun Belt states. Using time series data from 2006-2025, including sector ETFs, Federal Funds Rate, mortgage rates, and Zillow Home Value Index data, the analysis employs regression models to quantify market sensitivities to rate changes. Key findings reveal heterogeneous sector responses, with Energy showing positive sensitivity to rate increases while Technology exhibits negative correlation. Housing markets demonstrate varying lag structures, with Arizona responding immediately to rate changes while Florida shows delayed effects. Financial mathematics applications include cash flow modeling demonstrating how each 1\% mortgage rate increase reduces IRR by approximately 0.67-0.72 percentage points. This research provides actionable insights for sector rotation strategies and regional real estate investment decisions during monetary policy shifts.}
+\keywords{interest rates, sector rotation, NPV, IRR, housing markets, Federal Reserve}
+
+% ------------------------------------------------
+% Document
+% ------------------------------------------------
+\begin{document}
+\maketitle
+
+Fed policy plays a crucial role in pricing risk assets across financial markets. Changes in interest rates influence both equity valuations and real estate markets through multiple transmission mechanisms. Early research by \textcite{bernanke2005} established that unexpected Federal Funds Rate changes significantly impact stock market returns, with this relationship varying substantially across economic sectors. Subsequent work by \textcite{giuliodori2005} demonstrated that housing markets exhibit heterogeneous responses to monetary policy based on region-specific factors.
+
+This study addresses three primary research questions: (1) How do changes in Federal Reserve interest rates impact stock market returns across different sectors? (2) What is the relationship between interest rate changes and real estate markets, particularly in states with high population growth like Florida and Arizona? (3) How can financial mathematics concepts such as rate of return, NPV, and IRR be applied to analyze these relationships?
+
+The research contributes to existing literature by integrating traditional econometric analysis with applied financial mathematics to quantify investment implications. By examining sector-specific equity responses alongside regional housing market dynamics, this study provides both theoretical insights and practical guidance for investors navigating changing interest rate environments.
+
+\section{Data}
+\subsection{Data Sources}
+The analysis relied on four primary types of financial time series data spanning from 2006 to 2025:
+
+\begin{itemize}
+\item \textbf{Sector ETFs:} Daily price data for 10 SPDR sector ETFs (XLB, XLU, XLV, XLE, XLF, XLP, XLRE, XLK, XLI, XLY) representing distinct segments of the US equity market. These ETFs track the performance of S\&P 500 companies grouped by industry sector.
+
+\item \textbf{Federal Funds Rate (FFR):} Monthly effective Federal Funds Rate data from the Federal Reserve Economic Data (FRED) database, reflecting the central bank's monetary policy stance.
+
+\item \textbf{Mortgage Rates:} Weekly 30-year fixed mortgage rate data (MORTGAGE30US series) from FRED, representing the borrowing costs for residential real estate.
+
+\item \textbf{Zillow Home Value Index (ZHVI):} Monthly housing price data for Arizona and Florida, chosen as representative Sun Belt states with high population growth during the study period.
+\end{itemize}
+
+\subsection{Data Processing}
+Data cleaning and integration were performed using a structured workflow in DataCleaning.ipynb:
+
+\begin{itemize}
+\item \textbf{Collection \& Standardization:} Raw CSV files were standardized to a consistent date format with Python's pandas library.
+
+\item \textbf{Frequency Harmonization:} Higher-frequency data (daily stock prices) were downsampled to monthly observations using end-of-month values to align with the lower-frequency macroeconomic indicators.
+
+\item \textbf{Forward-Fill Imputation:} For any date gaps in lower-frequency data (e.g., weekly mortgage rates), values were forward-filled to ensure consistent daily observations across the merged dataset.
+
+\item \textbf{Data Transformation:}
+\begin{itemize}
+    \item First differences of FFR and mortgage rates ($\Delta$FFR, $\Delta$Mortgage30Y) to capture rate changes
+    \item Percentage returns for sector ETFs and ZHVI values to enable comparable analysis
+\end{itemize}
+\end{itemize}
+
+\subsection{Final Dataset Structure}
+The resulting combined\_data\_final.csv contains the following columns:
+
+\begin{itemize}
+\item Date: Daily timestamps serving as the index
+\item Sector ETF columns (XLB, XLU, etc.): Daily closing prices for each sector
+\item FFR: Federal Funds Rate (percentage)
+\item Mortgage30Y: 30-year fixed mortgage rate (percentage)
+\item Florida\_ZHVI and Arizona\_ZHVI: Housing price indices
+\end{itemize}
+
+For analysis in DataAnalysis.ipynb, this dataset was further manipulated to:
+\begin{itemize}
+\item Calculate return series for all asset classes
+\item Align time series for regression analysis
+\item Create lagged variables to study lead-lag relationships between interest rates and asset returns
+\end{itemize}
+
+The final dataset contains 4,623 daily observations spanning 19 years, providing comprehensive coverage of multiple interest rate cycles.
+
+\section{Methodology}
+\subsection{Equity Sector Analysis}
+To quantify the relationship between Federal Reserve policy changes and equity sector performance, I implemented a multi-faceted regression approach:
+
+\textbf{Baseline OLS Models:} First-difference regressions were constructed between month-over-month Federal Funds Rate changes ($\Delta$FFR) and monthly sector ETF returns. These models captured the contemporaneous sensitivity of sectors to interest rate adjustments using the equation:
+
+\begin{equation}
+R_{sector,t} = \alpha + \beta \Delta \text{FFR}_t + \varepsilon_t
+\end{equation}
+
+where $\beta$ represents the sector's rate sensitivity coefficient. Statistical significance was evaluated using t-tests with heteroskedasticity-robust standard errors.
+
+\textbf{Confidence Interval Estimation:} 95\% confidence intervals were computed for all beta coefficients using the t-distribution with n-2 degrees of freedom to assess statistical significance and precision of estimates. For each sector ETF, the formula applied was:
+
+\begin{equation}
+\text{CI}_{95\%} = \beta \pm t_{0.975,n-2} \times \text{SE}_{\beta}
+\end{equation}
+
+\textbf{Lead-Lag Analysis:} To investigate delayed market reactions, I constructed lagged regressions across four time horizons (0, 1, 2, and 3 months). This approach allowed identification of sectors where rate effects materialize gradually rather than immediately, using models of the form:
+
+\begin{equation}
+R_{sector,t} = \alpha + \beta \Delta \text{FFR}_{t-k} + \varepsilon_t
+\end{equation}
+
+where $k$ represents the lag period in months.
+
+\subsection{Housing Market Analysis}
+The housing analysis employed distributed-lag models to capture the dynamic relationship between interest rate changes and home price movements in Florida and Arizona:
+
+\textbf{Dual Rate Variables:} Both Federal Funds Rate changes ($\Delta$FFR) and 30-year mortgage rate changes ($\Delta$Mortgage) were analyzed as explanatory variables to distinguish between policy rate and consumer financing rate effects.
+
+\textbf{Extended Lag Structure:} Given the slower adjustment mechanisms in real estate markets, I implemented a longer lag structure (0, 3, 6, 9, and 12 months) compared to equity markets. This captured temporal dynamics using the model:
+
+\begin{equation}
+R_{ZHVI,t} = \alpha + \sum_{k=0}^{12} \beta_k \Delta \text{Rate}_{t-k} + \varepsilon_t
+\end{equation}
+
+where $\Delta \text{Rate}$ represents either $\Delta$FFR or $\Delta$Mortgage, and $\beta_k$ is the sensitivity coefficient at lag $k$.
+
+\textbf{State Comparison Framework:} Parallel analyses for Florida and Arizona enabled direct comparison of rate sensitivities between these demographically similar but potentially financially distinct housing markets.
+
+\subsection{NPV and IRR Cash Flow Modeling}
+To translate interest rate impacts into actionable investment metrics, I developed a parametric cash flow model for residential real estate investments:
+
+\textbf{Model Specification:} The model incorporated key parameters including:
+\begin{itemize}
+\item Loan-to-value ratio: 80\%
+\item Gross rental yield: 6\% annually
+\item Operating expenses: 25\% of gross rental income
+\item Investment horizon: 5 years
+\item Discount rate for NPV: 5\% annually
+\end{itemize}
+
+\textbf{Scenario Analysis:} Three mortgage rate scenarios (3\%, 5\%, and 7\%) were evaluated to quantify the impact of varying interest costs on investment returns. The cash flow vector for each scenario was constructed as:
+
+\begin{align}
+\text{CF}_0 &= -\text{ Down payment (initial investment)} \\
+\text{CF}_1 \ldots \text{CF}_{59} &= \text{ Monthly net rental income - mortgage interest} \\
+\text{CF}_{60} &= \text{ Final month's net rental income - mortgage interest + property sale proceeds}
+\end{align}
+
+\textbf{Return Metrics:} For each scenario, both Net Present Value (NPV) and Internal Rate of Return (IRR) were calculated:
+
+\begin{equation}
+\text{NPV} = \sum_{t=0}^{60} \frac{\text{CF}_t}{(1+r)^{t/12}}
+\end{equation}
+
+where $r$ represents the annual discount rate (5\%), and
+
+\begin{equation}
+\text{IRR} = r \text{ such that } \sum_{t=0}^{60} \frac{\text{CF}_t}{(1+r)^{t/12}} = 0
+\end{equation}
+
+This comprehensive methodology enabled quantification of interest rate sensitivities across both equity and real estate markets, while the cash flow modeling translated these sensitivities into practical investment metrics.
+
+\section{Results}
+\subsection{Sector ETF Sensitivity to Federal Funds Rate Changes}
+
+The regression analysis revealed substantial heterogeneity in how different equity sectors respond to Federal Funds Rate (FFR) changes. Energy (XLE) demonstrated the strongest positive sensitivity with a beta coefficient of 0.0382, while Technology (XLK) exhibited a negative relationship with a beta of -0.0196. However, only the Energy sector's response was statistically significant at the 95\% confidence level, with confidence intervals that did not cross zero (CI: [0.0029, 0.0735]).
+
+The explanatory power of FFR changes was notably limited across all sectors, with R² values below 2\%. This suggests that while monetary policy shifts may influence sector returns, they represent just one of many factors affecting equity performance.
+
+The lag structure analysis revealed dynamic patterns in how sectors process interest rate information. Most sectors exhibit their strongest reaction to FFR changes at lag 0 (contemporaneous effect), with these effects generally dissipating or reversing by lag 3. Notably, the Financial sector (XLF) displayed a sign reversal from lag 0 ($\beta = 0.0251$) to lag 1 ($\beta = -0.0113$), suggesting a rapid reassessment of rate impact. This pattern supports the hypothesis that equity markets quickly incorporate monetary policy signals, typically within one month.
+
+\subsection{Housing Market Response to Interest Rate Changes}
+
+The analysis of Zillow Home Value Index (ZHVI) returns revealed distinct patterns across states. Arizona demonstrated immediate negative sensitivity to FFR changes ($\beta = -0.0173$), while Florida initially showed positive sensitivity ($\beta = 0.0072$) that turned negative at longer lags. These findings suggest that Arizona's housing market reacts more promptly to monetary tightening compared to Florida.
+
+Mortgage rate changes produced stronger statistical relationships than FFR changes, with R² values of 0.9\% for Florida and 0.5\% for Arizona. This aligns with expectations that consumer mortgage rates have more direct influence on housing markets than policy rates.
+
+Florida's FFR beta coefficient transitions from slightly positive at lag 0 to increasingly negative at lags 6-12 months, indicating delayed cooling effects of rate hikes. For mortgage rate sensitivity, both states exhibit increasingly negative betas at longer lags, with Arizona reaching peak negative sensitivity (-0.0285) at lag 6 months.
+
+These patterns suggest a transmission mechanism where policy rate changes gradually impact housing markets, with full effects taking 6-12 months to materialize.
+
+\subsection{NPV and IRR Analysis of Housing Investment}
+
+The cash flow modeling results quantify how different mortgage rates affect investment returns in both states. For a 5-year investment horizon starting in January 2020, Florida properties demonstrated higher NPV values and IRR returns across all mortgage rates compared to Arizona properties. At a 3\% mortgage rate, the model yielded IRRs of 9.27\% for Florida and 8.89\% for Arizona, while at a 7\% rate, returns declined to 7.92\% and 7.46\% respectively.
+
+Regression analysis of IRR sensitivity to mortgage rates revealed slopes of -0.6725\% IRR per 1\% mortgage rate increase for Florida and -0.7150\% for Arizona. This confirms that Arizona properties exhibit marginally higher interest rate sensitivity than Florida properties, consistent with the earlier time-series analysis results.
+
+The graphical representation illustrates the linear decrease in IRR as mortgage rates increase. While both states show parallel downward-sloping trends, Florida consistently maintains approximately 0.4-0.5 percentage points higher IRR across all mortgage scenarios. This performance gap reflects Florida's stronger housing price appreciation during the 2020-2025 study period, which partially offsets the negative impact of higher financing costs.
+
+The NPV analysis further reinforces these findings, with NPV declining more steeply in Arizona (-\$17,382 per 1\% rate increase) compared to Florida (-\$16,749 per 1\% rate increase).
+
+\section{Discussion}
+\subsection{Interpreting Sector Differences and Policy Implications}
+The findings from this study reveal important patterns in how different economic sectors and regional housing markets respond to interest rate changes. These patterns have implications for both investors and policymakers.
+
+\subsubsection{Sector-Specific Rate Sensitivity}
+The heterogeneous response of equity sectors to Federal Funds Rate changes aligns with theoretical expectations but adds nuance to our understanding. Energy's positive beta ($\beta = 0.0382$) may reflect the sector's unique positioning as an inflation hedge during tightening cycles. This stands in contrast to traditionally rate-sensitive sectors like Real Estate (XLRE), which showed negative responses to rate increases as expected due to higher financing costs and yield competition from fixed income.
+
+The nearly immediate incorporation of rate information into equity prices (evidenced by the strongest effects at lag 0) demonstrates the efficiency of stock markets in processing monetary policy signals. This finding has practical implications for sector rotation strategies, suggesting that investors seeking to capitalize on rate changes must act quickly, as these effects begin to dissipate or reverse within 1-3 months.
+
+\subsubsection{Regional Housing Market Differences}
+The contrasting responses of Florida and Arizona housing markets highlight how demographic and economic factors can influence the transmission of monetary policy to regional real estate. Florida's delayed negative response to rate increases may reflect its large retiree population who often purchase homes with cash, temporarily insulating the market from rate effects. In contrast, Arizona's immediate negative sensitivity suggests a greater reliance on mortgage financing and investor activity, making it more vulnerable to monetary tightening.
+
+These findings support targeted, regional approaches to housing policy rather than one-size-fits-all national strategies. Policymakers should consider that monetary policy will affect regional housing markets at different speeds and magnitudes based on local demographic and economic conditions.
+
+\subsection{Limitations}
+Despite the study's contributions, several limitations should be acknowledged:
+
+\subsubsection{Data Frequency Constraints}
+The use of monthly data for interest rates and housing prices may obscure finer market reactions that occur intra-month. Additionally, the forward-filling approach used to align different data frequencies could potentially smooth out some short-term volatility in the interest rate series.
+
+\subsubsection{Simplified Mortgage Model}
+The cash flow analysis employs an interest-only mortgage model that, while analytically useful, does not fully capture the complexity of most residential mortgages with principal amortization. This simplification likely results in somewhat pessimistic IRR estimates at higher interest rates compared to fully amortizing loans.
+
+\subsubsection{Low Explanatory Power}
+The consistently low R² values across both equity ($< 2\%$) and housing market ($< 1\%$) regressions indicate that interest rate changes explain only a small portion of return variability. This underscores that while interest rates are important signals, they operate within a complex economic system where multiple factors simultaneously influence asset prices.
+
+\subsubsection{Limited Demographic Controls}
+The analysis treats Florida and Arizona as homogeneous markets, whereas both states contain diverse sub-markets with varying demographic profiles. Future work could incorporate census tract-level data to better isolate the effects of demographics on interest rate sensitivity.
+
+\subsection{Future Research Directions}
+Several promising avenues for extending this research include:
+
+\begin{itemize}
+\item \textbf{Incorporating Housing Supply Constraints:} Analyzing how land-use restrictions and construction capacity interact with interest rates to influence housing price dynamics in high-growth regions.
+
+\item \textbf{Extended Time Horizons for Cash Flow Analysis:} Examining how IRR sensitivity to interest rates changes across different investment horizons (5, 10, and 20 years) to better inform long-term real estate investment strategies.
+
+\item \textbf{Multivariate Models:} Developing more comprehensive models that incorporate additional macroeconomic variables such as employment growth, migration patterns, and income levels to improve the explanatory power beyond what interest rates alone can provide.
+
+\item \textbf{Mortgage Structure Analysis:} Comparing interest rate sensitivity across different mortgage structures (fixed-rate, adjustable-rate, interest-only) to provide more tailored investment guidance under various financing scenarios.
+
+\item \textbf{Commercial Real Estate Extension:} Expanding the methodology to analyze commercial real estate segments, which may exhibit different interest rate sensitivities compared to residential markets due to their closer connection to business cycles.
+\end{itemize}
+
+By addressing these future directions, researchers can build upon this study's framework to develop more robust models for understanding how monetary policy transmits through various asset classes and regional markets.
+
+\section{Conclusion}
+This study investigated the complex relationships between interest rate changes and financial markets, focusing on sector equity performance, regional housing dynamics, and practical investment applications. Through rigorous quantitative analysis of nearly two decades of financial data, several key insights emerge that address the initial research questions.
+
+Regarding the first research question on how Federal Reserve interest rates impact stock market sectors, the analysis revealed substantial heterogeneity in sector responses. Energy (XLE) demonstrated a statistically significant positive relationship with rate increases ($\beta = 0.0382$), while Technology (XLK), Health Care (XLV), and Consumer Discretionary (XLY) exhibited negative sensitivities. These findings suggest that investors should consider sector-specific positioning during monetary policy shifts, particularly by overweighting Energy and Industrials during tightening cycles while being cautious with growth-oriented and interest-sensitive sectors. Importantly, the rapid dissipation of effects (typically within 1-3 months) highlights the efficiency of equity markets in processing monetary signals.
+
+For the second research question examining housing markets in high-growth states, the analysis uncovered meaningful differences in how Florida and Arizona respond to rate changes. Arizona's housing market demonstrated immediate negative sensitivity to rate increases, while Florida exhibited a delayed response that only materialized after 6-12 months. This regional variation likely stems from demographic differences, with Florida's large cash-buyer retirement community providing a temporary buffer against rising rates. For policymakers, these findings suggest that monetary policy transmission to housing markets operates with variable lags across regions, potentially necessitating regionally-tailored housing policies.
+
+The third research question explored financial mathematics applications, demonstrating how NPV and IRR metrics can quantify investment sensitivity to interest rates. The cash flow modeling revealed that each 1\% increase in mortgage rates reduced IRR by approximately 0.67-0.72 percentage points across both states, with Arizona exhibiting slightly higher sensitivity. This quantification provides practical guidance for real estate investors, suggesting that investment returns remain positive but diminished in high-rate environments, particularly when strong local price appreciation (as seen in Florida) can partially offset higher financing costs.
+
+Beyond these specific findings, this study makes several broader contributions. The methodological approach integrating traditional time-series analysis with financial mathematics provides a template for holistic financial market analysis. The lead-lag framework offers insights into market efficiency across asset classes, and the regional comparison demonstrates how demographic factors can modulate the impact of national monetary policy.
+
+While acknowledging the limitations of low explanatory power and simplified mortgage modeling, this research nonetheless provides actionable insights for investors and policymakers navigating changing interest rate environments. It underscores that while interest rates significantly influence asset prices, they represent one factor within a complex economic ecosystem where sector-specific drivers, regional dynamics, and multiple economic forces simultaneously shape financial markets.
+
+\printbibliography
+
+\begin{appendices}
+\section{Full regression outputs}
+% Add your regression outputs here
+
+\section{Python code snippets}
+% Add your code snippets here
+
+\section{Additional figures}
+% Add your additional figures here
+\end{appendices}
+
+\end{document}
